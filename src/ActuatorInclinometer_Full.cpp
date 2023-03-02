@@ -16,6 +16,7 @@ const int IN1_PIN = 6;
 const int IN2_PIN = 5;
 
 int targetValueElevation = 0;
+int AnemData;
 
 void setup()
 {
@@ -66,7 +67,7 @@ void loop()
   }
   else
   { // Feather mode when AnemData = 0
-    targetValueElevation = 0
+    targetValueElevation = 0;
   }
 
   // // Read normalized values
