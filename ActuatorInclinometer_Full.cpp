@@ -16,8 +16,7 @@ const int IN2_PIN = 5;
 int targetValueElevation = 0;
 
 
-void setup() 
-{
+void setup() {
   //
   Serial.begin(115200);
   GPSReceive.begin(115200);
@@ -31,30 +30,29 @@ void setup()
 
   Serial.println("Initialize MPU6050");
 
-  while(!mpu.begin(MPU6050_SCALE_2000DPS, MPU6050_RANGE_2G))
-  {
+  while(!mpu.begin(MPU6050_SCALE_2000DPS, MPU6050_RANGE_2G)) {
     Serial.println("Could not find a valid MPU6050 sensor, check wiring!");
     delay(500);
   }
 }
+
 void retractActuator() {
-digitalWrite(IN1_PIN, LOW);
-digitalWrite(IN2_PIN, HIGH);
+  digitalWrite(IN1_PIN, LOW);
+  digitalWrite(IN2_PIN, HIGH);
 }
 
 void stopActuator() {
-digitalWrite(IN1_PIN, LOW);
-digitalWrite(IN2_PIN, LOW);
+  digitalWrite(IN1_PIN, LOW);
+  digitalWrite(IN2_PIN, LOW);
 }
 
 void extendActuator() {
-digitalWrite(IN1_PIN, HIGH);
-digitalWrite(IN2_PIN, LOW);
+  digitalWrite(IN1_PIN, HIGH);
+  digitalWrite(IN2_PIN, LOW);
 }
 
 
-void loop()
-{
+void loop() {
   
   AnemData = AnemometerReceive.read(); //reads wether feathering needs to take place
 
@@ -73,23 +71,16 @@ void loop()
 
   // Output
   Serial.print(" Pitch = ");
-  Serial.print(pitch);
+  Serial.println(pitch);
   
-  Serial.println();
-
-  if (pitch < targetValueElevation - 3){
+  if (pitch < targetValueElevation - 3) {
     extendActuator();
   }
-  else if (pitch > targetValueElevation + 3){
+  else if (pitch > targetValueElevation + 3) {
     retractActuator();
   }
   else{
     stopActuator();
   }
 
-  delay(10);
-  // delay(20000);
-
 }
-
-

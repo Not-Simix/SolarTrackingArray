@@ -7,7 +7,7 @@ const int encoderA = 2;
 const int encoderB = 3;
 volatile int encoderPos = 0;
 
-int TargetValueAzimuth = 0;
+int targetValueAzimuth = 0;
 
 void setup() {
   Serial.begin(115200);
@@ -17,7 +17,7 @@ void setup() {
   pinMode(IN3_PIN, OUTPUT);
   pinMode(IN4_PIN, OUTPUT);
 
-// set encoder pins
+  // set encoder pins
   pinMode(encoderA, INPUT_PULLUP);
   pinMode(encoderB, INPUT_PULLUP);
 
@@ -29,32 +29,31 @@ void setup() {
 }
 
 void CCWDC() { //move counter-clockwise
-digitalWrite(IN3_PIN, LOW);
-digitalWrite(IN4_PIN, HIGH);
+  digitalWrite(IN3_PIN, LOW);
+  digitalWrite(IN4_PIN, HIGH);
 }
 
 void stopDC() { //stop
-digitalWrite(IN3_PIN, LOW);
-digitalWrite(IN4_PIN, LOW);
+  digitalWrite(IN3_PIN, LOW);
+  digitalWrite(IN4_PIN, LOW);
 }
 
 void CWDC() { // move clockwise
-digitalWrite(IN3_PIN, HIGH);
-digitalWrite(IN4_PIN, LOW);
+  digitalWrite(IN3_PIN, HIGH);
+  digitalWrite(IN4_PIN, LOW);
 }
+
 void loop() {
   // Read encoder position
   int encoderReading = encoderPos;
-  TargetValueAzimuth = GPSReceive.read();
-  
+  targetValueAzimuth = GPSReceive.read();
+
   // Calculate error between target position and current position
-  if (encoderPos < targetValueAzimuth - 3){
+  if (encoderPos < targetValueAzimuth - 5){
     CWDC();
-  }
-  else if (encoderPos > targetValueAzimuth + 3){
+  } else if (encoderPos > targetValueAzimuth + 5){
     CCWDC();
-  }
-  else{
+  } else{
     stopDC();
   }
   
@@ -62,9 +61,7 @@ void loop() {
   Serial.print("Current position: ");
   Serial.print(encoderReading);
   Serial.print("   Target position: ");
-  Serial.println(TargetValueAzimuth);
-  
-  delay(10);
+  Serial.println(targetValueAzimuth);
 }
 
 // Function to update encoder position
@@ -74,8 +71,7 @@ void updateEncoder() {
   
   if (encoderA == encoderB) {
     encoderPos++;
-  }
-  else {
+  } else {
     encoderPos--;
   }
 }

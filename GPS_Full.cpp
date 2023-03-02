@@ -42,10 +42,7 @@ uint32_t timer = millis();
     double Azimuth_rad = 0;
     double Azimuth_deg = 0;   
 
-void setup()
-{
-  //while (!Serial);  // uncomment to have the sketch wait until Serial is ready
-
+void setup() {
   // connect at 115200 so we can read the GPS fast enough and echo without dropping chars
   // also spit it out
   Serial.begin(115200);
@@ -74,8 +71,7 @@ void setup()
   GPSSerial.println(PMTK_Q_RELEASE);
 }
 
-void loop() // run over and over again
-{
+void loop() { // run over and over again
   // read data from the GPS in the 'main loop'
   char c = GPS.read();
   // if you want to debug, this is a good time to do it!
@@ -132,8 +128,7 @@ void loop() // run over and over again
     //Comment out the following to run specific time tests
     day = calculateDayOfYear(GPS.day, GPS.month, GPS.year+2000);
     hour = GPS.hour + time_zone;
-    if (GPS.hour >= 0 && GPS.hour <= 4)
-    {
+    if (GPS.hour >= 0 && GPS.hour < -time_zone) {
       hour += 24;
       day -= 1;
     }
@@ -184,7 +179,7 @@ void loop() // run over and over again
     
     if (hour >= 12) {
         Azimuth_rad = -(acos(-((sin(lat_rad)*cos(Zenith_rad)-sin(decl_rad))/(cos(lat_rad)*sin(Zenith_rad))))) + (2*PI);
-    } else if (hour < 12) {
+    } else {
         Azimuth_rad = acos((sin(decl_rad) - (cos(Zenith_rad)*sin(lat_rad)))/(sin(Zenith_rad)*cos(lat_rad)));
     }
     //Serial.print("Azimuth_rad: ");
