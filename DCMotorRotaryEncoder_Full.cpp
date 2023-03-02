@@ -21,7 +21,7 @@ void setup() {
   pinMode(encoderA, INPUT_PULLUP);
   pinMode(encoderB, INPUT_PULLUP);
 
-  attachInterrupt(digitalPinToInterrupt(encoderPinA), updateEncoder, CHANGE);
+  attachInterrupt(digitalPinToInterrupt(encoderA), updateEncoder, CHANGE);
 
   digitalWrite(IN3_PIN, HIGH);
   digitalWrite(IN4_PIN, LOW);
@@ -66,8 +66,8 @@ void loop() {
 
 // Function to update encoder position
 void updateEncoder() {
-  int encoderA = digitalRead(encoderPinA);
-  int encoderB = digitalRead(encoderPinB);
+  int encoderA = digitalRead(encoderA);
+  int encoderB = digitalRead(encoderB);
   
   if (encoderA == encoderB) {
     encoderPos++;
