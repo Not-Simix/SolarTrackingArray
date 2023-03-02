@@ -174,7 +174,8 @@ void loop() { // run over and over again
     }
     Serial.print("Elevation_deg: ");
     Serial.println(Elevation_deg);
-    TransmitActuator.write(Elevation_deg);
+    int Elevation = Elevation_deg;
+    TransmitActuator.write(Elevation);
 
     
     if (hour >= 12) {
@@ -191,7 +192,8 @@ void loop() { // run over and over again
     }
     Serial.print("Azimuth_deg: ");
     Serial.println(Azimuth_deg);
-    TransmitDCMotor.write(Azimuth_deg);
+    int Azimuth = Azimuth_deg;
+    TransmitDCMotor.write(Azimuth);
     Serial.print("GPS Latitude: ");
     Serial.println(GPS.latitudeDegrees);
 
