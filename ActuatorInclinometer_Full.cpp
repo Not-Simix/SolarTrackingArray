@@ -1,23 +1,20 @@
 #include <Wire.h>
 #include <MPU6050.h>
+
 #define GPSReceive Serial1
 #define AnemometerReceive Serial2
+
 MPU6050 mpu;
-/* Firgelli Automations
- * Limited or no support: we do not have the resources for Arduino code support
- * 
- * Program demos how a motor driver controls direction & speed of a linear actuator 
- */
- 
+
+// Set Motor Driver Connection Pins 
 const int ENA_PIN = 7;
 const int IN1_PIN = 6;
 const int IN2_PIN = 5;
 
+//Create the target value
 int targetValueElevation = 0;
 
-
 void setup() {
-  //
   Serial.begin(115200);
   GPSReceive.begin(115200);
   AnemometerReceive.begin(115200);
@@ -26,7 +23,6 @@ void setup() {
   pinMode(IN2_PIN, OUTPUT);
 
   digitalWrite(ENA_PIN, HIGH);
-
 
   Serial.println("Initialize MPU6050");
 
@@ -51,10 +47,9 @@ void extendActuator() {
   digitalWrite(IN2_PIN, LOW);
 }
 
-
 void loop() {
   
-  AnemData = AnemometerReceive.read(); //reads wether feathering needs to take place
+  AnemData = AnemometerReceive.read(); //reads whether feathering needs to take place
 
   if (AnemData = 1) { // normal functioning
     targetValueElevation = GPSReceive.read();
@@ -62,25 +57,24 @@ void loop() {
     targetValueElevation = 0
   }
   
-  // // Read normalized values 
+  // Read normalized values 
   Vector normAccel = mpu.readNormalizeAccel();
 
-  // Calculate Pitch & Roll
-  int pitch = -(atan2(normAccel.XAxis, sqrt(normAccel.YAxis*normAccel.YAxis + normAccel.ZAxis*normAccel.ZAxis))*180.0)/M_PI;
+  // Calculate Solar Panel Elevation
+  int elevation = -(atan2(normAccel.XAxis, sqrt(normAccel.YAxis*normAccel.YAxis + normAccel.ZAxis*normAccel.ZAxis))*180.0)/M_PI;
  
-
   // Output
-  Serial.print(" Pitch = ");
-  Serial.println(pitch);
+  Serial.print("Elevation = ");
+  Serial.println(elevation);
   
-  if (pitch < targetValueElevation - 3) {
+  //The following determines if the Solar panel is within +- 3 degrees of the suns elevation
+  if (elevation < targetValueElevation - 3) {
     extendActuator();
   }
-  else if (pitch > targetValueElevation + 3) {
+  else if (elevation > targetValueElevation + 3) {
     retractActuator();
   }
   else{
     stopActuator();
   }
-
 }
