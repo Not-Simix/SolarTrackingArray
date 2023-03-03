@@ -44,7 +44,6 @@ uint32_t timer = millis();
 
 void setup() {
   // connect at 115200 so we can read the GPS fast enough and echo without dropping chars
-  // also spit it out
   Serial.begin(115200);
   Serial.println("Adafruit GPS Starting up...");
   // 9600 NMEA is the default baud rate for Adafruit MTK GPS's- some use 4800
@@ -53,14 +52,8 @@ void setup() {
   TransmitDCMotor.begin(115200);
   // uncomment this line to turn on RMC (recommended minimum) and GGA (fix data) including altitude
   GPS.sendCommand(PMTK_SET_NMEA_OUTPUT_RMCGGA);
-  // uncomment this line to turn on only the "minimum recommended" data
-  //GPS.sendCommand(PMTK_SET_NMEA_OUTPUT_RMCONLY);
-  // For parsing data, we don't suggest using anything but either RMC only or RMC+GGA since
-  // the parser doesn't care about other sentences at this time
   // Set the update rate
   GPS.sendCommand(PMTK_SET_NMEA_UPDATE_1HZ); // 1 Hz update rate
-  // For the parsing code to work nicely and have time to sort thru the data, and
-  // print it out we don't suggest using anything higher than 1 Hz
 
   // Request updates on antenna status, comment out to keep quiet
   GPS.sendCommand(PGCMD_ANTENNA);
@@ -79,14 +72,9 @@ void loop() { // run over and over again
     if (c) Serial.print(c);
   // if a sentence is received, we can check the checksum, parse it...
   if (GPS.newNMEAreceived()) {
-    // a tricky thing here is if we print the NMEA sentence, or data
-    // we end up not listening and catching other sentences!
-    // so be very wary if using OUTPUT_ALLDATA and trying to print out data
-    //Serial.print(GPS.lastNMEA()); // this also sets the newNMEAreceived() flag to false
     if (!GPS.parse(GPS.lastNMEA())) // this also sets the newNMEAreceived() flag to false
       return; // we can fail to parse a sentence in which case we should just wait for another
   }
-
   // approximately every 2 seconds or so, print out the current stats
   if (millis() - timer > 2000) {
     timer = millis(); // reset the timer
@@ -125,14 +113,14 @@ void loop() { // run over and over again
       Serial.print("Antenna status: "); Serial.println((int)GPS.antenna);
     }
     
-    //Comment out the following to run specific time tests
     day = calculateDayOfYear(GPS.day, GPS.month, GPS.year+2000);
     hour = GPS.hour + time_zone;
     if (GPS.hour >= 0 && GPS.hour < -time_zone) {
       hour += 24;
       day -= 1;
     }
-  
+
+    // The following is astronomical equations used to identify the elevation and azimuth of the sun
     fract_year_rad = ((2*PI)/365)*(day - 1 + ((hour-12)/24));
    
     fract_year_deg = fract_year_rad * rad_to_deg;
@@ -176,15 +164,13 @@ void loop() { // run over and over again
     Serial.println(Elevation_deg);
     int Elevation = Elevation_deg;
     TransmitActuator.write(Elevation);
-
     
-    if (hour >= 12) {
+    if (hour >= 12) { // Proper Azimuth calculation for Manchester, NH 12:00 - 24:00
         Azimuth_rad = -(acos(-((sin(lat_rad)*cos(Zenith_rad)-sin(decl_rad))/(cos(lat_rad)*sin(Zenith_rad))))) + (2*PI);
-    } else {
+    } else { // Proper Azimuth calculation for Manchester, NH 0:00 - 11:59
         Azimuth_rad = acos((sin(decl_rad) - (cos(Zenith_rad)*sin(lat_rad)))/(sin(Zenith_rad)*cos(lat_rad)));
     }
-    //Serial.print("Azimuth_rad: ");
-    //Serial.println(Azimuth_rad);
+
     if (hour < 20 && hour > 5) { //if between 5 and 20, function as normal
         Azimuth_deg = (Azimuth_rad * rad_to_deg);
     } else { //if outside of 5 to 20, go to 0
@@ -199,31 +185,6 @@ void loop() { // run over and over again
 
     Serial.print("GPS Longitude: ");
     Serial.println(GPS.longitudeDegrees);
-
-//    Serial.print("Hour: ");
-//    Serial.println(hour);
-//    Serial.print("GPS Hour: ");
-//    Serial.println(GPS.hour);
-//
-//    Serial.print("Minute: ");
-//    Serial.println(minute);
-//    Serial.print("GPS minute: ");
-//    Serial.println(GPS.minute);
-//
-//    Serial.print("Seconds: ");
-//    Serial.println(sec);
-//    Serial.print("GPS seconds: ");
-//    Serial.println(GPS.seconds);
-//
-//    Serial.print("GPS year: ");
-//    Serial.println(GPS.year);
-//    Serial.print("GPS Month: ");
-//    Serial.println(GPS.month);
-//    Serial.print("GPS Day: ");
-//    Serial.println(GPS.day);
-//    Serial.print("Day: ");
-//    Serial.println(day);
-    
   }
 }
 
