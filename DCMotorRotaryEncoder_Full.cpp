@@ -45,8 +45,7 @@ void CWDC() { // move clockwise
 void loop() {
   // Read encoder position
   int encoderReading = encoderPos;
-  targetValueAzimuth = GPSReceive.read();
-
+  targetValueAzimuth = GPSReceive.read() * 3;
   // Calculate error between target position and current position
   if (encoderPos < targetValueAzimuth - 5){
     CWDC(); 
@@ -61,6 +60,7 @@ void loop() {
   Serial.print(encoderReading);
   Serial.print(" and the Target position is ");
   Serial.println(targetValueAzimuth);
+  delay(1000);
 }
 
 // Function to update encoder position
