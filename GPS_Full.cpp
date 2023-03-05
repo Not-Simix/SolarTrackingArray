@@ -48,8 +48,8 @@ void setup() {
   Serial.println("Adafruit GPS Starting up...");
   // 9600 NMEA is the default baud rate for Adafruit MTK GPS's- some use 4800
   GPS.begin(9600);
-  TransmitActuator.begin(115200);
-  TransmitDCMotor.begin(115200);
+  TransmitActuator.begin(19200);
+  TransmitDCMotor.begin(19200);
   // uncomment this line to turn on RMC (recommended minimum) and GGA (fix data) including altitude
   GPS.sendCommand(PMTK_SET_NMEA_OUTPUT_RMCGGA);
   // Set the update rate
@@ -135,6 +135,7 @@ void loop() { // run over and over again
     decl_deg = decl_rad * rad_to_deg;
     
     long_ = GPS.longitudeDegrees;
+    
     lat_deg = GPS.latitudeDegrees;    
 
     lat_rad = lat_deg / rad_to_deg;
@@ -160,9 +161,12 @@ void loop() { // run over and over again
     } else { //if outside 5 to 20, go to 0
         Elevation_deg = 0;
     }
+
     Serial.print("Elevation_deg: ");
     Serial.println(Elevation_deg);
-    int Elevation = Elevation_deg;
+    int Elevation = int(Elevation_deg);
+    Serial.println(" ");
+    Serial.println(Elevation);
     TransmitActuator.write(Elevation);
     
     if (hour >= 12) { // Proper Azimuth calculation for Manchester, NH 12:00 - 24:00
@@ -185,6 +189,7 @@ void loop() { // run over and over again
 
     Serial.print("GPS Longitude: ");
     Serial.println(GPS.longitudeDegrees);
+    delay(10);
   }
 }
 
