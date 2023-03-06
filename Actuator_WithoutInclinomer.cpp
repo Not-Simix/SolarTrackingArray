@@ -9,7 +9,8 @@ const int IN2_PIN = 5;
 //Create the target value
 int targetValueElevation = 0;
 int AnemData = 1;
-
+int targetVal;
+const unsigned int byteSize = 6;
 void setup() {
   Serial.begin(115200);
   GPSReceive.begin(19200);
@@ -38,14 +39,20 @@ void extendActuator() {
 }
 
 void loop() {
-  //while(!AnemometerReceive.available()){
-  AnemData = AnemometerReceive.read(); //reads whether feathering needs to take place
-  //}// Uncomment to debug
+  while(AnemometerReceive.available() > 0){
+    AnemData = AnemometerReceive.read(); //reads whether feathering needs to take place
+  }
+  if (GPSReceive.available() >= 2  ){
+    targetVal = GPSReceive.read() << 8;
+    targetVal = GPSReceive.read();
+  }
+  Serial.print("Target Val: ");
+  Serial.println(targetVal);
+  // Uncomment to debug
   // Serial.println("Anem Data read complete");
   if (AnemData == 1) { // normal functioning
-    while (GPSReceive.available()){targetValueElevation = GPSReceive.read();
-      }
-    }else { // Feather mode when AnemData = 0
+   targetValueElevation = targetVal;
+    } else { // Feather mode when AnemData = 0
     targetValueElevation = 0;
   }
   // Uncomment to debug
@@ -61,7 +68,7 @@ Serial.print(", Target value elevation = ");
 Serial.print(targetValueElevation);
 Serial.print(", AnemData = ");
 Serial.println(AnemData);
-Serial.println(GPSReceive.read());
+
 
   //The following determines if the Solar panel is within +- 3 degrees of the suns elevation
   if (elevation < targetValueElevation - 3) {
@@ -73,5 +80,4 @@ Serial.println(GPSReceive.read());
   else{
     stopActuator();
   }
-  delay(1000);
 }
