@@ -1,8 +1,10 @@
 #define TransmitActuator Serial1
 
 int AnemData = 0;
+
 bool isCounting = false;
-bool isCountingSecondary = falseh;
+bool isCountingSecondary = false;
+
 unsigned long startTime = 0;
 unsigned long currTime = millis();
 
@@ -16,19 +18,20 @@ void loop() {
   Serial.print("Analog Value =");
   Serial.println(sensorValue);
  
-  float voltage = (sensorValue / 1024) * 5; //Arduino ADC resolution 0-1023
+  float voltage = (sensorValue / 1023) * 5; //Arduino ADC resolution 0-1023
   Serial.print("Voltage =");
   Serial.print(voltage);
   Serial.println(" V");
 
-  float wind_speed = mapfloat(voltage, 0.4, 2, 0, 32.4);
+  //float wind_speed = mapfloat(voltage, 0.4, 2, 0, 32.4);
+  float wind_speed = 0;
   float speed_mph = ((wind_speed *3600)/1609.344);
   float speed_knot = ((wind_speed * 1.943844));
   Serial.print("Wind Speed =");
   Serial.print(wind_speed);
   Serial.println("m/s");
-  Serial.print(speed_mph);
-  Serial.println("mph");
+  // Serial.print(speed_mph);
+  // Serial.println("mph");
   Serial.print(speed_knot);
   Serial.println("knots");
   Serial.println(" ");
@@ -60,8 +63,12 @@ void loop() {
   if (speed_knot > 30 && currTime < startTime + 600000 && isCountingSecondary) { //It's been less than 10 minutes and our speed has increased
       isCountingSecondary = false; // stops flag to end feathering
   }
-
+  //comment to end testing
+  AnemData = 1;
+  Serial.print("AnemData = ");
+  Serial.println(AnemData);
   TransmitActuator.write(AnemData);
+  delay(1000);
 }
 
 float mapfloat(float x, float in_min, float in_max, float out_min, float out_max) {
