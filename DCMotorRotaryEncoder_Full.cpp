@@ -8,10 +8,11 @@ const int encoderB = 3;
 
 volatile int encoderPos = 0;
 int targetValueAzimuth = 0;
+int targetVal;
 
 void setup() {
   Serial.begin(115200);
-  GPSReceive.begin(115200);
+  GPSReceive.begin(19200);
 
   pinMode(ENB_PIN, OUTPUT);
   pinMode(IN3_PIN, OUTPUT);
@@ -45,7 +46,11 @@ void CWDC() { // move clockwise
 void loop() {
   // Read encoder position
   int encoderReading = encoderPos;
-  targetValueAzimuth = GPSReceive.read() * 3;
+   if (GPSReceive.available() > 1 ){
+    targetVal = GPSReceive.read();
+   }
+   Serial.println(targetVal, BIN);
+  targetValueAzimuth = targetVal * 3;
   // Calculate error between target position and current position
   if (encoderPos < targetValueAzimuth - 5){
     CWDC(); 
