@@ -10,6 +10,8 @@ Adafruit_GPS GPS(&GPSSerial);
 // Set GPSECHO to 'false' to turn off echoing the GPS data to the Serial console
 // Set to 'true' if you want to debug and listen to the raw GPS sentences
 #define GPSECHO false
+char elev[10];
+char azi[10];
 
 uint32_t timer = millis();
 
@@ -164,10 +166,12 @@ void loop() { // run over and over again
 
     Serial.print("Elevation_deg: ");
     Serial.println(Elevation_deg);
-    int Elevation = int(Elevation_deg);
+    dtostrf(Elevation_deg, -5, 2, elev);
+    int elevation = atoi(elev);
+    elevation = 90 - elevation; // transfers from with respect to perpindicular earth to parallel earth axis
     Serial.println(" ");
-    Serial.println(Elevation);
-    TransmitActuator.write(Elevation);
+    Serial.println(elevation);
+    TransmitActuator.write(elevation);
     
     if (hour >= 12) { // Proper Azimuth calculation for Manchester, NH 12:00 - 24:00
         Azimuth_rad = -(acos(-((sin(lat_rad)*cos(Zenith_rad)-sin(decl_rad))/(cos(lat_rad)*sin(Zenith_rad))))) + (2*PI);
@@ -182,8 +186,11 @@ void loop() { // run over and over again
     }
     Serial.print("Azimuth_deg: ");
     Serial.println(Azimuth_deg);
-    int Azimuth = Azimuth_deg;
-    TransmitDCMotor.write(Azimuth);
+    dtostrf(Azimuth_deg, -5, 2, azi);
+    int azimuth = atoi(azi);
+    Serial.println(" ");
+    Serial.println(azimuth);
+    TransmitDCMotor.write(azimuth);
     Serial.print("GPS Latitude: ");
     Serial.println(GPS.latitudeDegrees);
 
