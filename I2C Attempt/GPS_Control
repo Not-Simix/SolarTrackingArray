@@ -13,6 +13,7 @@ Adafruit_GPS GPS(&GPSSerial);
 
 MPU6050 mpu;
 
+int AnemData;
 uint32_t timer = millis();
 
     double rad_to_deg = 180/PI;
