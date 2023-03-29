@@ -1,12 +1,11 @@
 #define TransmitActuator Serial1
 
-int AnemData = 0;
+int AnemData = 1;
 
 bool isCounting = false;
 bool isCountingSecondary = false;
 
 unsigned long startTime = 0;
-unsigned long currTime = millis();
 
 void setup() {
   Serial.begin(115200);
@@ -14,19 +13,19 @@ void setup() {
 }
 
 void loop() {
+  unsigned long currTime = millis();
   float sensorValue = analogRead(A0);
   Serial.print("Analog Value =");
   Serial.println(sensorValue);
  
-  float voltage = (sensorValue / 1023) * 5; //Arduino ADC resolution 0-1023
-  Serial.print("Voltage =");
-  Serial.print(voltage);
-  Serial.println(" V");
+  float voltage = (sensorValue / 1024) * 5; //Arduino ADC resolution 0-1023
+  // Serial.print("Voltage =");
+  // Serial.print(voltage);
+  // Serial.println(" V");
 
-  //float wind_speed = mapfloat(voltage, 0.4, 2, 0, 32.4);
-  float wind_speed = 0;
+  float wind_speed = mapfloat(voltage, 0.4, 2, 0, 32.4);
   float speed_mph = ((wind_speed *3600)/1609.344);
-  float speed_knot = ((wind_speed * 1.943844));
+  float speed_knot = abs((wind_speed * 1.943844));
   Serial.print("Wind Speed =");
   Serial.print(wind_speed);
   Serial.println("m/s");
@@ -35,7 +34,7 @@ void loop() {
   Serial.print(speed_knot);
   Serial.println("knots");
   Serial.println(" ");
-  
+
   if (!isCounting && speed_knot > 35) { //Speed hits 35 for the first time
       isCounting = true; // flags begin feathering
       startTime = currTime;
@@ -63,12 +62,12 @@ void loop() {
   if (speed_knot > 30 && currTime < startTime + 600000 && isCountingSecondary) { //It's been less than 10 minutes and our speed has increased
       isCountingSecondary = false; // stops flag to end feathering
   }
-  //comment to end testing
-  AnemData = 1;
-  Serial.print("AnemData = ");
-  Serial.println(AnemData);
+
   TransmitActuator.write(AnemData);
-  delay(1000);
+  Serial.print(speed_knot);
+  Serial.print("   ");
+  Serial.println(AnemData);
+  delay(100);
 }
 
 float mapfloat(float x, float in_min, float in_max, float out_min, float out_max) {
