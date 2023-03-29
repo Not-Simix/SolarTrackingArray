@@ -12,7 +12,8 @@ Adafruit_GPS GPS(&GPSSerial);
 #define GPSECHO false
 char elev[10];
 char azi[10];
-
+bool isCounting = false;
+int startTime = 0;
 uint32_t timer = millis();
 
     double rad_to_deg = 180/PI;
@@ -68,6 +69,7 @@ void setup() {
 
 void loop() { // run over and over again
   // read data from the GPS in the 'main loop'
+  unsigned long currTime = millis();
   char c = GPS.read();
   // if you want to debug, this is a good time to do it!
   if (GPSECHO)
@@ -159,11 +161,22 @@ void loop() { // run over and over again
     Zenith_deg = Zenith_rad*rad_to_deg;
     
     if (hour < 20 && hour > 5) { //if between 5 and 20, function as normal
-        Elevation_deg = 90 - Zenith_deg;
+      Elevation_deg = 90 - Zenith_deg;
     } else { //if outside 5 to 20, go to 0
-        Elevation_deg = 0;
+      Elevation_deg = 0;
     }
 
+    if (hour >= 12) { // Proper Azimuth calculation for Manchester, NH 12:00 - 24:00
+      Azimuth_rad = -(acos(-((sin(lat_rad)*cos(Zenith_rad)-sin(decl_rad))/(cos(lat_rad)*sin(Zenith_rad))))) + (2*PI);
+    } else { // Proper Azimuth calculation for Manchester, NH 0:00 - 11:59
+      Azimuth_rad = acos((sin(decl_rad) - (cos(Zenith_rad)*sin(lat_rad)))/(sin(Zenith_rad)*cos(lat_rad)));
+    }
+
+    if (hour < 20 && hour > 5) { //if between 5 and 20, function as normal
+      Azimuth_deg = (Azimuth_rad * rad_to_deg);
+    } else { //if outside of 5 to 20, go to 0
+      Azimuth_deg = 0;
+    }
     Serial.print("Elevation_deg: ");
     Serial.println(Elevation_deg);
     dtostrf(Elevation_deg, -5, 2, elev);
@@ -171,29 +184,39 @@ void loop() { // run over and over again
     elevation = 90 - elevation; // transfers from with respect to perpindicular earth to parallel earth axis
     Serial.println(" ");
     Serial.println(elevation);
-    TransmitActuator.write(elevation);
-    
-    if (hour >= 12) { // Proper Azimuth calculation for Manchester, NH 12:00 - 24:00
-        Azimuth_rad = -(acos(-((sin(lat_rad)*cos(Zenith_rad)-sin(decl_rad))/(cos(lat_rad)*sin(Zenith_rad))))) + (2*PI);
-    } else { // Proper Azimuth calculation for Manchester, NH 0:00 - 11:59
-        Azimuth_rad = acos((sin(decl_rad) - (cos(Zenith_rad)*sin(lat_rad)))/(sin(Zenith_rad)*cos(lat_rad)));
-    }
-
-    if (hour < 20 && hour > 5) { //if between 5 and 20, function as normal
-        Azimuth_deg = (Azimuth_rad * rad_to_deg);
-    } else { //if outside of 5 to 20, go to 0
-        Azimuth_deg = 0;
-    }
     Serial.print("Azimuth_deg: ");
     Serial.println(Azimuth_deg);
     dtostrf(Azimuth_deg, -5, 2, azi);
     int azimuth = atoi(azi);
     Serial.println(" ");
     Serial.println(azimuth);
+    TransmitActuator.write(elevation);
     TransmitDCMotor.write(azimuth);
+    if (!isCounting && startTime < currTime) { 
+      isCounting = true; // flags begin wait to transmit
+      startTime = currTime;
+    }
+
+    if (isCounting && startTime + 30000 <= currTime) {
+
+      Serial.println(" ");
+      Serial.println(" ");
+      Serial.println(" ");
+      Serial.println(" ");
+      Serial.println(" ");
+      Serial.println(" ");
+      Serial.println(" ");
+      Serial.println(" ");
+      Serial.println(" ");
+      Serial.println(" ");
+      Serial.println(" ");
+      Serial.println(" ");
+      Serial.println("Transmit");
+      isCounting = false;
+    }
+
     Serial.print("GPS Latitude: ");
     Serial.println(GPS.latitudeDegrees);
-
     Serial.print("GPS Longitude: ");
     Serial.println(GPS.longitudeDegrees);
     delay(10);
