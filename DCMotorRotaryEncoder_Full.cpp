@@ -1,86 +1,97 @@
-#include <LiquidCrystal.h>
+#include <LiquidCrystal_I2C.h>
 
 #define GPSReceive Serial1
 
-const int EN = 7;
-const int IN1 = 6;
-const int IN2 = 5;
+const int EN = 7; //Enable Motor Driver PWM Control
+const int IN1 = 6; //Set IN1 pinout
+const int IN2 = 5; //Set IN2 pinout
 
-const int encoderA = 2;
-const int encoderB = 3;
+const int encoderA = 2; //Set encoder channel A pinout
+const int encoderB = 3; //Set encoder channel B pinout
 
-volatile int counter = 0;
-volatile int temp = 0;
-int targetValueAzimuth = 0;
-int targetVal;
+volatile int counter = 0; //Create a counter
+volatile int temp = 0; //Create a temp data storage
+int targetValueAzimuth = 0; //Set the targetValueAzimuth for Azimuth logic
+int targetVal; //Set the received value from Orientation Logic
+int gearRatio = 100; //Specify the gear ratio of the system
+bool retHome = false; //Set the flag to return home
 
-const int rs = 22, en = 23, d24 = 24, d25 = 25, d26 = 26, d27 = 27;
-LiquidCrystal lcd(rs, en, d24, d25, d26, d27);
+LiquidCrystal_I2C lcd(0x3F,16,2); //Create an LCD Screen
 
 void setup() {
-  Serial.begin(115200);
-  GPSReceive.begin(19200);
-  lcd.begin(16,2);
-  pinMode(EN, OUTPUT);
-  pinMode(IN1, OUTPUT);
-  pinMode(IN2, OUTPUT);
+  Serial.begin(115200); //Open up serial communication to a PC
+  GPSReceive.begin(19200); //Open up serial communication with the Orientation calculations
 
-  pinMode(encoderA, INPUT_PULLUP);
-  pinMode(encoderB, INPUT_PULLUP);
-  attachInterrupt(0, ai0, RISING);
-  attachInterrupt(1, ai1, RISING);
-  lcd.print("TargetA  ActualA");
+  lcd.init(); //Initialize LCD
+  lcd.clear(); //Clear LCD
+  lcd.backlight(); //Start the LCD backlight
+  lcd.print("TargetA  ActualA"); //Set static text on the LCD
+
+  pinMode(EN, OUTPUT); //Set motor driver pins to outputs
+  pinMode(IN1, OUTPUT); //Set motor driver pins to outputs
+  pinMode(IN2, OUTPUT); //Set motor driver pins to outputs
+
+  pinMode(encoderA, INPUT_PULLUP); //Set encoder channel pins to input pullups
+  pinMode(encoderB, INPUT_PULLUP); //Set encoder channel pins to input pullups
+  attachInterrupt(0, ai0, RISING); //Create an interrupt for when voltage on channel A rises
+  attachInterrupt(1, ai1, RISING); //Create an interrupt for when voltage on channel B rises
+
 }
 
-void CCWDC() { //move counter-clockwise
+void CCWDC() { //move the system counter-clockwise
   digitalWrite(IN1, HIGH);
   digitalWrite(IN2, LOW);
-  analogWrite(EN, 255);
+  analogWrite(EN, 255); //Set speed to fastest PWM signal
 }
 
 void stopDC() { //stop
   digitalWrite(IN1, LOW);
   digitalWrite(IN2, LOW);
-  analogWrite(EN,0);
+  analogWrite(EN,0); //Set speed to stop
 }
 
 void CWDC() { // move clockwise
   digitalWrite(IN1, LOW);
   digitalWrite(IN2, HIGH);
-  analogWrite(EN, 255);
+  analogWrite(EN, 255); //Set speed to fastest PWM signal
 }
 
 void loop() {
-  // Read encoder position
-    // if( counter != temp ){
-    // Serial.println (counter);
-    // temp = counter;
-    // }
-  Serial.println(counter);
-  if (GPSReceive.available() > 1 ){
-    targetVal = GPSReceive.read();
-    //targetVal  = -150;
+
+  if(counter/gearRatio == 720 && !retHome){ //Coded limit of 720 degrees of rotation in the system
+    retHome = true; //Flags to return home
+    targetVal = 0; //Sets home position
+  } 
+  if(counter/gearRatio == 0 && retHome){ //Flags to stop returning home
+    retHome = false; //Flags to return to normal functioning
+    targetVal = 0; //Buffers the home position
   }
-  targetValueAzimuth = targetVal * 30;
+  else{
+      Serial.println(counter); //Print the counter
+  if (GPSReceive.available() > 1 ){ //Checks that data is coming from the Orientation Logic
+    targetVal = GPSReceive.read(); //Sets the received target Val
+    Serial.println("Targ Received"); //Notifies PC the target was received
+  }
+  }
+  targetValueAzimuth = targetVal * gearRatio; //Creates a logical position to move the system to
   // Calculate error between target position and current position
-  if (counter < targetValueAzimuth - 150){
+  if (counter < targetValueAzimuth - (gearRatio * 3)){ //Moves the system towards the target clockwise
     CWDC(); 
-  } else if (counter > targetValueAzimuth + 150){
+  } else if (counter > targetValueAzimuth + (gearRatio * 3)){ //Moves the system towards the target counter-clockwise
     CCWDC();
-  } else{
+  } else{ //Stops the system
     stopDC();
   }
-
   // Print current position and target position to serial monitor
   Serial.print("Current position ") ;
   Serial.print(counter);
   Serial.print(" and the Target position is ");
   Serial.println(targetValueAzimuth);
-  lcd.setCursor(0,1);
-  lcd.print(targetValueAzimuth/30);
-  lcd.setCursor(9,1);
-  lcd.print(counter/30);
-  delay(1000);
+  lcd.setCursor(0,1); //Prints the target value
+  lcd.print(targetValueAzimuth/gearRatio);
+  lcd.setCursor(9,1); //Prints the current value
+  lcd.print(counter/gearRatio);
+  delay(100);
 }
 
   void ai0() {
