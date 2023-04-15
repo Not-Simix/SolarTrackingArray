@@ -12,10 +12,10 @@ Adafruit_GPS GPS(&GPSSerial);
 #define GPSECHO false
 char elev[10];
 char azi[10];
-bool isCounting = false;
-int startTime = 0;
-uint32_t timer = millis();
+unsigned long startTime = 0; //Create a start time
+uint32_t timer = millis(); //Create a timer
 
+//Set all variables
     double rad_to_deg = 180/PI;
     double fract_year_rad = 0;
     double fract_year_deg = 0;
@@ -28,14 +28,13 @@ uint32_t timer = millis();
     double sec = 0;
     double long_;
     double lat_deg;
-     //double long_rad = long_ / rad_to_deg;
     double lat_rad;
     double eqtime = 0;
     double decl_rad = 0;
     double decl_deg = 0;
     double off_set = 0;
     double true_solar_time = 0;
-    double time_zone = -5;
+    double time_zone = -5; //IMPORTANT: SET TO CURRENT TIME ZONE
     double Solar_Hour_Angle_deg = 0;
     double Solar_Hour_Angle_rad = 0;
     double Zenith_rad = 0;
@@ -51,6 +50,7 @@ void setup() {
   Serial.println("Adafruit GPS Starting up...");
   // 9600 NMEA is the default baud rate for Adafruit MTK GPS's- some use 4800
   GPS.begin(9600);
+  //Open serial ports to Actuator and DC logic
   TransmitActuator.begin(19200);
   TransmitDCMotor.begin(19200);
   // uncomment this line to turn on RMC (recommended minimum) and GGA (fix data) including altitude
@@ -117,9 +117,9 @@ void loop() { // run over and over again
       Serial.print("Antenna status: "); Serial.println((int)GPS.antenna);
     }
     
-    day = calculateDayOfYear(GPS.day, GPS.month, GPS.year+2000);
-    hour = GPS.hour + time_zone;
-    if (GPS.hour >= 0 && GPS.hour < -time_zone) {
+    day = calculateDayOfYear(GPS.day, GPS.month, GPS.year+2000); //Calculate the current day
+    hour = GPS.hour + time_zone; //Calculate the current hour
+    if (GPS.hour >= 0 && GPS.hour < -time_zone) { //Edit the hour if it would be the next day due to time zone
       hour += 24;
       day -= 1;
     }
@@ -179,42 +179,26 @@ void loop() { // run over and over again
     }
     Serial.print("Elevation_deg: ");
     Serial.println(Elevation_deg);
+    //Change the double to a string
     dtostrf(Elevation_deg, -5, 2, elev);
+    //Change the string to a transmittable int
     int elevation = atoi(elev);
     elevation = 90 - elevation; // transfers from with respect to perpindicular earth to parallel earth axis
     Serial.println(" ");
     Serial.println(elevation);
     Serial.print("Azimuth_deg: ");
     Serial.println(Azimuth_deg);
+    //Change the double to a string
     dtostrf(Azimuth_deg, -5, 2, azi);
+    //Change the string to a transmittable integer
     int azimuth = atoi(azi);
     Serial.println(" ");
     Serial.println(azimuth);
+
+    //Transmit the resulting target positions from the astronomical equations
     TransmitActuator.write(elevation);
     TransmitDCMotor.write(azimuth);
-    if (!isCounting && startTime < currTime) { 
-      isCounting = true; // flags begin wait to transmit
-      startTime = currTime;
-    }
-
-    if (isCounting && startTime + 30000 <= currTime) {
-
-      Serial.println(" ");
-      Serial.println(" ");
-      Serial.println(" ");
-      Serial.println(" ");
-      Serial.println(" ");
-      Serial.println(" ");
-      Serial.println(" ");
-      Serial.println(" ");
-      Serial.println(" ");
-      Serial.println(" ");
-      Serial.println(" ");
-      Serial.println(" ");
-      Serial.println("Transmit");
-      isCounting = false;
-    }
-
+    
     Serial.print("GPS Latitude: ");
     Serial.println(GPS.latitudeDegrees);
     Serial.print("GPS Longitude: ");
@@ -223,7 +207,7 @@ void loop() { // run over and over again
   }
 }
 
-int calculateDayOfYear(int day, int month, int year) {
+int calculateDayOfYear(int day, int month, int year) { //Day of the year calculations
   
   // Given a day, month, and year (4 digit), returns 
   // the day of year. Errors return 999.
